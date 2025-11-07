@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Tracker</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script type="text/javascript" src="/eel.js"></script>
+</head>
+<body>
+    
+    <div class="gradient-bg"></div>
+    
+    
+    <div class="container">
+        
+        <aside class="sidebar glass-card">
+            <div class="logo">
+                <h2>PORTFOLIO<span class="accent">TRACKER</span></h2>
+            </div>
+            
+            <nav class="nav-menu">
+                <a href="#" class="nav-item active" data-page="dashboard">
+                    <span class="icon">DASH</span>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="nav-item" data-page="holdings">
+                    <span class="icon">HOLD</span>
+                    <span>Holdings</span>
+                </a>
+                <a href="#" class="nav-item" data-page="analytics">
+                    <span class="icon">DATA</span>
+                    <span>Analytics</span>
+                </a>
+                <a href="#" class="nav-item" data-page="news">
+                    <span class="icon">NEWS</span>
+                    <span>News</span>
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <button class="btn-export" onclick="exportPortfolio()">
+                    <span>EXPORT</span>
+                </button>
+            </div>
+        </aside>
+        
+        
+        <main class="main-content">
+            
+            <div id="dashboard-page" class="page active">
+                
+                <header class="page-header">
+                    <h1 class="page-title">Dashboard</h1>
+                    <div class="header-actions">
+                        <button class="btn-primary" onclick="showAddStockModal()">
+                            ADD STOCK
+                        </button>
+                    </div>
+                </header>
+                
+                
+                <div class="summary-cards">
+                    <div class="summary-card glass-card">
+                        <div class="card-header">
+                            <span class="card-icon">VAL</span>
+                            <span class="card-label">Total Value</span>
+                        </div>
+                        <div class="card-value" id="total-value">$0.00</div>
+                        <div class="card-change positive" id="total-change">+$0.00 (0.00%)</div>
+                    </div>
+                    
+                    <div class="summary-card glass-card">
+                        <div class="card-header">
+                            <span class="card-icon">INV</span>
+                            <span class="card-label">Total Invested</span>
+                        </div>
+                        <div class="card-value" id="total-invested">$0.00</div>
+                    </div>
+                    
+                    <div class="summary-card glass-card">
+                        <div class="card-header">
+                            <span class="card-icon">YTD</span>
+                            <span class="card-label">YTD Return</span>
+                        </div>
+                        <div class="card-value" id="ytd-return">0.00%</div>
+                    </div>
+                    
+                    <div class="summary-card glass-card">
+                        <div class="card-header">
+                            <span class="card-icon">POS</span>
+                            <span class="card-label">Positions</span>
+                        </div>
+                        <div class="card-value" id="num-positions">0</div>
+                    </div>
+                </div>
+                
+                
+                <div class="chart-section glass-card">
+                    <div class="chart-header">
+                        <h3>Portfolio Performance</h3>
+                        <div class="chart-controls">
+                            <select id="chart-period" class="glass-select" onchange="updateCharts()">
+                                <option value="1mo">1M</option>
+                                <option value="3mo">3M</option>
+                                <option value="6mo">6M</option>
+                                <option value="ytd" selected>YTD</option>
+                                <option value="1y">1Y</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="portfolioChart"></canvas>
+                    </div>
+                </div>
+                
+                
+                <div class="quick-stats">
+                    <div class="stat-card glass-card">
+                        <h4>Top Performer</h4>
+                        <div id="top-performer" class="stat-content">—</div>
+                    </div>
+                    <div class="stat-card glass-card">
+                        <h4>Bottom Performer</h4>
+                        <div id="bottom-performer" class="stat-content">—</div>
+                    </div>
+                </div>
+            </div>
+            
+            
+            <div id="holdings-page" class="page">
+                <header class="page-header">
+                    <h1 class="page-title">Holdings</h1>
+                    <button class="btn-primary" onclick="showAddStockModal()">
+                        ADD STOCK
+                    </button>
+                </header>
+                
+                <div class="holdings-grid" id="holdings-grid">
+                    <div class="empty-state">
+                        <div class="empty-icon">EMPTY</div>
+                        <h3>No Holdings Yet</h3>
+                        <p>Add your first stock to get started tracking</p>
+                        <button class="btn-primary" onclick="showAddStockModal()">ADD STOCK</button>
+                    </div>
+                </div>
+            </div>
+            
+            
+            <div id="analytics-page" class="page">
+                <header class="page-header">
+                    <h1 class="page-title">Analytics</h1>
+                </header>
+                
+                <div class="analytics-grid">
+                    <div class="glass-card">
+                        <h3>Sector Allocation</h3>
+                        <canvas id="sectorChart"></canvas>
+                    </div>
+                    
+                    <div class="glass-card">
+                        <h3>Performance Attribution</h3>
+                        <div id="attribution-list"></div>
+                    </div>
+                </div>
+            </div>
+            
+            
+            <div id="news-page" class="page">
+                <header class="page-header">
+                    <h1 class="page-title">Market News</h1>
+                </header>
+                
+                <div id="news-feed" class="news-feed">
+                    <div class="empty-state">
+                        <div class="empty-icon">NEWS</div>
+                        <h3>No News Available</h3>
+                        <p>Add stocks to see relevant market news</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    
+    <div id="add-stock-modal" class="modal">
+        <div class="modal-content glass-card">
+            <div class="modal-header">
+                <h2>Add Stock</h2>
+                <button class="close-btn" onclick="closeAddStockModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Ticker Symbol</label>
+                    <input type="text" id="modal-ticker" placeholder="AAPL" class="glass-input">
+                </div>
+                <div class="form-group">
+                    <label>Buy Price</label>
+                    <input type="number" id="modal-price" placeholder="0.00" step="0.01" class="glass-input">
+                </div>
+                <div class="form-group">
+                    <label>Shares</label>
+                    <input type="number" id="modal-shares" placeholder="1" value="1" class="glass-input">
+                </div>
+                <div class="form-group">
+                    <label>Buy Date</label>
+                    <input type="date" id="modal-date" class="glass-input">
+                </div>
+                <div id="modal-error" class="error-message"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeAddStockModal()">CANCEL</button>
+                <button class="btn-primary" onclick="addStock()">ADD TO PORTFOLIO</button>
+            </div>
+        </div>
+    </div>
+    
+    
+    <div id="stock-detail-modal" class="modal">
+        <div class="modal-content glass-card modal-large">
+            <div class="modal-header">
+                <h2 id="detail-ticker">AAPL</h2>
+                <button class="close-btn" onclick="closeStockDetailModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="stock-detail-grid">
+                    <div class="detail-section">
+                        <h3>Price Info</h3>
+                        <div class="detail-item">
+                            <span>Current Price</span>
+                            <span id="detail-price" class="value">—</span>
+                        </div>
+                        <div class="detail-item">
+                            <span>52W High</span>
+                            <span id="detail-52w-high" class="value">—</span>
+                        </div>
+                        <div class="detail-item">
+                            <span>52W Low</span>
+                            <span id="detail-52w-low" class="value">—</span>
+                        </div>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <h3>Valuation</h3>
+                        <div class="detail-item">
+                            <span>P/E Ratio</span>
+                            <span id="detail-pe" class="value">—</span>
+                        </div>
+                        <div class="detail-item">
+                            <span>Market Cap</span>
+                            <span id="detail-mcap" class="value">—</span>
+                        </div>
+                        <div class="detail-item">
+                            <span>Beta</span>
+                            <span id="detail-beta" class="value">—</span>
+                        </div>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <h3>Fundamentals</h3>
+                        <div class="detail-item">
+                            <span>ROE</span>
+                            <span id="detail-roe" class="value">—</span>
+                        </div>
+                        <div class="detail-item">
+                            <span>Profit Margin</span>
+                            <span id="detail-margin" class="value">—</span>
+                        </div>
+                        <div class="detail-item">
+                            <span>Revenue Growth</span>
+                            <span id="detail-growth" class="value">—</span>
+                        </div>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <h3>Classification</h3>
+                        <div class="detail-item">
+                            <span>Sector</span>
+                            <span id="detail-sector" class="value">—</span>
+                        </div>
+                        <div class="detail-item">
+                            <span>Industry</span>
+                            <span id="detail-industry" class="value">—</span>
+                        </div>
+                        <div class="detail-item">
+                            <span>Dividend Yield</span>
+                            <span id="detail-dividend" class="value">—</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="main.js"></script>
+</body>
+</html>
