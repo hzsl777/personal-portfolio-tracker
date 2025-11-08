@@ -9,3 +9,4 @@ python-socketio
 gunicorn
 eventlet
 urllib3<2.0
+psycopg2-binary
