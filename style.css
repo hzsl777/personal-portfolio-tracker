@@ -433,6 +433,11 @@ body {
     background: rgba(255, 255, 255, 0.15);
 }
 
+.glass-select option {
+    color: #000;
+    background: #fff;
+}
+
 .chart-container {
     height: 400px;
     position: relative;
