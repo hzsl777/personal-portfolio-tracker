@@ -174,6 +174,41 @@ function closeAddStockModal() {
     clearModalForm();
 }
 
+function showEditStockModal(ticker, buyPrice, shares, buyDate) {
+    document.getElementById('edit-ticker').value = ticker;
+    document.getElementById('edit-price').value = buyPrice;
+    document.getElementById('edit-shares').value = shares;
+    document.getElementById('edit-date').value = buyDate;
+    document.getElementById('edit-stock-modal').classList.add('active');
+}
+
+function closeEditStockModal() {
+    document.getElementById('edit-stock-modal').classList.remove('active');
+    document.getElementById('edit-modal-error').classList.remove('active');
+}
+
+function updateStock() {
+    const ticker = document.getElementById('edit-ticker').value;
+    const price = parseFloat(document.getElementById('edit-price').value);
+    const shares = parseInt(document.getElementById('edit-shares').value);
+    const date = document.getElementById('edit-date').value;
+    const errorEl = document.getElementById('edit-modal-error');
+    
+    if (!price || !shares || !date) {
+        errorEl.textContent = 'Please fill in all fields';
+        errorEl.classList.add('active');
+        return;
+    }
+    
+    if (price <= 0 || shares <= 0) {
+        errorEl.textContent = 'Price and shares must be positive';
+        errorEl.classList.add('active');
+        return;
+    }
+    
+    socket.emit('update_stock', { ticker, buy_price: price, buy_date: date, shares });
+}
+
 function closeStockDetailModal() {
     document.getElementById('stock-detail-modal').classList.remove('active');
 }
@@ -224,6 +259,10 @@ function removeStock(ticker) {
     if (confirm(`Remove ${ticker} from portfolio?`)) {
         socket.emit('remove_stock', { ticker });
     }
+}
+
+function editStock(ticker, buyPrice, shares, buyDate) {
+    showEditStockModal(ticker, buyPrice, shares, buyDate);
 }
 
 // Dashboard update
@@ -399,9 +438,10 @@ function loadHoldings() {
                     </div>
                 </div>
                 <div class="holding-actions">
-                    <button class="btn-view" onclick="viewStockDetails('${position.ticker}')">DETAILS</button>
-                    <button class="btn-remove" onclick="removeStock('${position.ticker}')">REMOVE</button>
-                </div>
+    <button class="btn-view" onclick="editStock('${position.ticker}', ${position.buy_price}, ${position.shares}, '${position.buy_date}')">EDIT</button>
+    <button class="btn-view" onclick="viewStockDetails('${position.ticker}')">DETAILS</button>
+    <button class="btn-remove" onclick="removeStock('${position.ticker}')">REMOVE</button>
+</div>
             `;
             holdingsGrid.appendChild(card);
         });
