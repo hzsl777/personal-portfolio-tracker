@@ -1,4 +1,4 @@
-const BACKEND_URL = 'https://personal-portfolio-tracker-illa.onrender.com/';
+const BACKEND_URL = 'https://personal-portfolio-tracker-7tdz.onrender.com';
 const socket = io(BACKEND_URL);
 const UPDATE_INTERVAL = 60000; // 1 minute
 
