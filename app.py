@@ -106,6 +106,25 @@ def handle_remove_stock(data):
     portfolio = [p for p in portfolio if p['ticker'] != ticker]
     emit('stock_removed', {'success': True})
 
+@socketio.on('update_stock')
+def handle_update_stock(data):
+    """Update existing stock in portfolio"""
+    global portfolio
+    try:
+        ticker = data['ticker'].upper()
+        
+        # Find and update the stock
+        for item in portfolio:
+            if item['ticker'] == ticker:
+                item['buy_price'] = float(data['buy_price'])
+                item['buy_date'] = data['buy_date']
+                item['shares'] = int(data['shares'])
+                break
+        
+        emit('stock_updated', {'success': True})
+    except Exception as e:
+        emit('stock_update_error', {'error': str(e)})
+
 @socketio.on('get_portfolio')
 def handle_get_portfolio():
     """Get portfolio data"""
