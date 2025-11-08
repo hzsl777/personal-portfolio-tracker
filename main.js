@@ -77,6 +77,20 @@ socket.on('stock_removed', (data) => {
     }
 });
 
+socket.on('stock_updated', (data) => {
+    if (data.success) {
+        closeEditStockModal();
+        refreshDashboard();
+        showNotification('Stock updated successfully!', 'success');
+    }
+});
+
+socket.on('stock_update_error', (data) => {
+    const errorEl = document.getElementById('edit-modal-error');
+    errorEl.textContent = data.error;
+    errorEl.classList.add('active');
+});
+
 function initializeApp() {
     setupEventListeners();
     setTodayDate();
