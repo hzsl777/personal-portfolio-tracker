@@ -1,3 +1,5 @@
+import eventlet
+eventlet.monkey_patch()
 from flask import Flask
 from flask import send_from_directory
 from flask_socketio import SocketIO, emit
