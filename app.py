@@ -1,5 +1,7 @@
 import eventlet
 eventlet.monkey_patch()
+import psycopg2
+from psycopg2.extras import RealDictCursor
 from flask import Flask
 from flask import send_from_directory
 from flask_socketio import SocketIO, emit
@@ -68,6 +70,65 @@ def format_stock_info(stock, ticker):
         'revenue_growth': (info.get('revenueGrowth', 0) * 100) if info.get('revenueGrowth') else 0,
     }
 
+# Database connection
+def get_db_connection():
+    """Connect to PostgreSQL database"""
+    DATABASE_URL = os.environ.get('DATABASE_URL')
+    if DATABASE_URL:
+        # Render uses postgresql:// but psycopg2 needs postgres://
+        if DATABASE_URL.startswith('postgres://'):
+            DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
+        conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+        return conn
+    return None
+
+def init_db():
+    """Initialize database tables"""
+    conn = get_db_connection()
+    if not conn:
+        print("No database connection - using in-memory storage")
+        return
+    
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS portfolio (
+            id SERIAL PRIMARY KEY,
+            ticker VARCHAR(10) NOT NULL,
+            buy_price DECIMAL(10, 2) NOT NULL,
+            buy_date DATE NOT NULL,
+            shares INTEGER NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    conn.commit()
+    cursor.close()
+    conn.close()
+    print("Database initialized")
+
+def load_portfolio_from_db():
+    """Load portfolio from database"""
+    global portfolio
+    conn = get_db_connection()
+    if not conn:
+        return
+    
+    cursor = conn.cursor()
+    cursor.execute('SELECT ticker, buy_price, buy_date, shares FROM portfolio')
+    rows = cursor.fetchall()
+    portfolio = [dict(row) for row in rows]
+    # Convert date to string
+    for item in portfolio:
+        item['buy_date'] = item['buy_date'].strftime('%Y-%m-%d')
+        item['buy_price'] = float(item['buy_price'])
+    
+    cursor.close()
+    conn.close()
+    print(f"Loaded {len(portfolio)} positions from database")
+
+# Initialize DB on startup
+init_db()
+load_portfolio_from_db()
+
 # Socket.IO event handlers
 @socketio.on('connect')
 def handle_connect():
@@ -87,13 +148,27 @@ def handle_add_stock(data):
             emit('stock_add_error', {'error': 'Invalid ticker symbol'})
             return
         
-        portfolio.append({
+        stock_data = {
             'ticker': ticker,
             'buy_price': float(data['buy_price']),
             'buy_date': data['buy_date'],
             'shares': int(data['shares'])
-        })
+        }
         
+        # Save to database
+        conn = get_db_connection()
+        if conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                'INSERT INTO portfolio (ticker, buy_price, buy_date, shares) VALUES (%s, %s, %s, %s)',
+                (stock_data['ticker'], stock_data['buy_price'], stock_data['buy_date'], stock_data['shares'])
+            )
+            conn.commit()
+            cursor.close()
+            conn.close()
+        
+        # Add to memory
+        portfolio.append(stock_data)
         emit('stock_added', {'success': True})
     except Exception as e:
         emit('stock_add_error', {'error': str(e)})
@@ -103,6 +178,17 @@ def handle_remove_stock(data):
     """Remove stock from portfolio"""
     global portfolio
     ticker = data['ticker']
+    
+    # Remove from database
+    conn = get_db_connection()
+    if conn:
+        cursor = conn.cursor()
+        cursor.execute('DELETE FROM portfolio WHERE ticker = %s', (ticker,))
+        conn.commit()
+        cursor.close()
+        conn.close()
+    
+    # Remove from memory
     portfolio = [p for p in portfolio if p['ticker'] != ticker]
     emit('stock_removed', {'success': True})
 
@@ -113,7 +199,19 @@ def handle_update_stock(data):
     try:
         ticker = data['ticker'].upper()
         
-        # Find and update the stock
+        # Update database
+        conn = get_db_connection()
+        if conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                'UPDATE portfolio SET buy_price = %s, buy_date = %s, shares = %s WHERE ticker = %s',
+                (float(data['buy_price']), data['buy_date'], int(data['shares']), ticker)
+            )
+            conn.commit()
+            cursor.close()
+            conn.close()
+        
+        # Update memory
         for item in portfolio:
             if item['ticker'] == ticker:
                 item['buy_price'] = float(data['buy_price'])
